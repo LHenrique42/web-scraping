@@ -56,6 +56,10 @@ REDIS='127.0.0.1' yarn test
 }
 ```
 
+### DockerHub image name:
+
+lhenrique42/web-scraping-app
+
 ---
 
-Feito com 💜 by Henrique :wave:
+Make with 💜 by Henrique :wave:
