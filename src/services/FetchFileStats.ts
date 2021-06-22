@@ -39,6 +39,10 @@ class FetchFileStatsService {
 
       let redisStats = await jsonCache.get(redisKey) as Stats[];
 
+      /* 
+        Try Get from Redis. If fails -> Get from Github and save on redis with 3600 timeout
+      */
+
       if(redisStats) {
         stats = redisStats;
       } else {

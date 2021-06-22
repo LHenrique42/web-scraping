@@ -46,7 +46,7 @@ REDIS='127.0.0.1' yarn test
 
 ### Rotas da aplicação
 
-- **`GET /stats`**: The route receives a json with this fields:
+- **`GET /stats`**: The route receives a body (json) with this fields:
 
 ```json
 {
