@@ -37,17 +37,17 @@ class FetchGithubFileStatsService implements IFetchGithubFileStatsService {
 
       const jsonCache = new JSONCache<typeof stats>(this._redisClient, {prefix: 'cache:'});      
 
-      let redisStats = await jsonCache.get(redisKey) as Stats[];
+      let statsFromRedis = await jsonCache.get(redisKey) as Stats[];
 
       /* 
         Try Get from Redis. If fails -> Get from Github and save on redis with 3600 timeout
       */
 
-      if(redisStats) {
-        stats = redisStats;
+      if(statsFromRedis) {
+        stats = statsFromRedis;
       } else {
         stats = await this.GetFileStatsFromGithubRepository(repository, "", stats);
-        const redisOptions: ISetOptions = { expire: 3600 }
+        const redisOptions: ISetOptions = { expire: 18000 }
         await jsonCache.set(redisKey, stats, redisOptions);
       }
 
@@ -73,16 +73,17 @@ class FetchGithubFileStatsService implements IFetchGithubFileStatsService {
 
       for(var i = 0; i < rowHeaders.length; ++i)
       {
-        const file = rowHeaders.item(i)?.textContent;
+        const fileOrFolder = rowHeaders.item(i)?.textContent;
 
-        var extension = file?.match(/\.[0-9a-z]+$/i)?.toString();
+        var extension = fileOrFolder?.match(/\.[0-9a-z]+$/i)?.toString();
+
         if(extension) {
           
-          var newUrl = "https://github.com/" + repository.username + "/" + repository.repository + "/blob/" + repository.branch + "/" + subfolder + file;
+          var newUrl = "https://github.com/" + repository.username + "/" + repository.repository + "/blob/" + repository.branch + "/" + subfolder + fileOrFolder;
           const { data } = await axios.get(newUrl);      
           
           const lineCount: string = data.match(/(?<line>([0-9])+\slines)/);
-          const size: string = data.match(/(?<line>([0-9])+(.?)([0-9])+\s(Bytes|KB|MB))/);
+          const size: string = data.match(/(?<size>([0-9])+(.?)([0-9])+\s(Bytes|KB|MB))/);
 
           if(lineCount && size) {
             var parsedLines = parseInt(lineCount[1].replace( /[^\d\.]*/g, ''));
@@ -93,22 +94,30 @@ class FetchGithubFileStatsService implements IFetchGithubFileStatsService {
               var fileCount = stat?.count == null ? 1 : stat?.count + 1;
               var totalSize = stat?.bytes == null ? bytes : stat?.bytes + bytes;
               var totalLines = stat?.lines == null ? parsedLines : stat?.lines + parsedLines;
-              const newStats: Stats = { lines : totalLines, bytes : totalSize, count : fileCount, extension : extension};
+              const newStats: Stats = { 
+                lines : totalLines, 
+                bytes : totalSize, 
+                count : fileCount, 
+                extension : extension};
+
               var indexOf = stats.indexOf(stat);
               stats[indexOf] = newStats;
             } else {
               var fileCount = 1;
-              const newStats: Stats = { lines : parsedLines, bytes : bytes, count : fileCount, extension : extension};
+              const newStats: Stats = { 
+                lines : parsedLines, 
+                bytes : bytes, 
+                count : fileCount, 
+                extension : extension};
               
               stats.push(newStats);
-
             }
           } else {
             var newDirectory = rowHeaders.item(i)?.textContent;
             if(newDirectory) subDirectories.push(newDirectory);
           }
         } else {
-          if(file) subDirectories.push(file);          
+          if(fileOrFolder) subDirectories.push(fileOrFolder);          
         }
       }
     } catch (error) {
@@ -116,6 +125,7 @@ class FetchGithubFileStatsService implements IFetchGithubFileStatsService {
     }
 
     for(const directory of subDirectories) {
+      // if not previous directory
       if(directory != ". .") {
         var newSubdirectory = subfolder.concat(directory + "/");
         await this.GetFileStatsFromGithubRepository(repository, newSubdirectory, stats);  

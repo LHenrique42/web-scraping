@@ -5,12 +5,12 @@ import GithubRepository from '../models/GithubRepository';
 import Stats from '../models/Stats';
 import TYPES from '../types';
 
-const fetchFileStatsRouter = Router();
+const fetchGithubFileStatsRouter = Router();
 
 const fetchGithubFileStatsService: IFetchGithubFileStatsService =
   container.get<IFetchGithubFileStatsService>(TYPES.FetchGithubFileStatsService);
 
-fetchFileStatsRouter.get('/', async (request, response) => {
+  fetchGithubFileStatsRouter.get('/', async (request, response) => {
   try {
     const repository = request.query['repository'];
     const username = request.query['username'];
@@ -25,8 +25,6 @@ fetchFileStatsRouter.get('/', async (request, response) => {
       response.status(404).json({ error: 'One or more params have invalid format' });
       return;
     }
-
-    console.log(repository);
     
     const githubRepository: GithubRepository = { repository, username, branch };
 
@@ -38,4 +36,4 @@ fetchFileStatsRouter.get('/', async (request, response) => {
   }
 });
 
-export default fetchFileStatsRouter;
+export default fetchGithubFileStatsRouter;

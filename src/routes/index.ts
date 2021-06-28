@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import fetchFileStatsRouter from './stats';
+import fetchGithubFileStatsRouter from './githubStats';
 
 const routes = Router();
 
-routes.use('/stats', fetchFileStatsRouter);
+routes.use('/stats', fetchGithubFileStatsRouter);
 
 export default routes;
