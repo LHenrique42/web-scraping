@@ -28,13 +28,17 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@types/inversify": "^2.0.33",
     "@types/ioredis": "^4.26.4",
     "@types/jsdom": "^16.2.11",
     "@types/redis": "^2.8.29",
+    "@types/reflect-metadata": "^0.1.0",
     "axios": "^0.21.1",
     "express": "^4.17.1",
+    "inversify": "^5.1.1",
     "ioredis": "^4.27.6",
     "jsdom": "^16.6.0",
-    "redis-json": "^6.0.1"
+    "redis-json": "^6.0.1",
+    "reflect-metadata": "^0.1.13"
   }
 }

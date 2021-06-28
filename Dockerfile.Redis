@@ -1,0 +1,18 @@
+FROM node:14-alpine
+
+#Install build essentials for redis
+RUN apk add musl-dev gcc make g++ zlib-dev linux-headers
+
+COPY . .
+
+#Redis Installation script
+RUN sh ./install-redis.sh
+
+WORKDIR '/var/www/app'
+
+RUN yarn install
+
+EXPOSE 3000
+
+#Deploying App With redis
+CMD ["sh", "-c", "redis-server > /dev/null 2>&1 & yarn dev:server"]

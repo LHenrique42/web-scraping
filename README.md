@@ -14,7 +14,7 @@
 
 ## About the project
 
-Application to extract stats informations from GitHub users repositories using NodeJS and Redis.
+Application to extract file stats from GitHub users repositories using NodeJS and Redis.
 
 ### Requirements
 
@@ -26,13 +26,29 @@ Application to extract stats informations from GitHub users repositories using N
 
 ### Execute and test
 
-#### Execute:
+#### Execute (with docker-compose):
 
 ```
 docker-compose up -f docker-compose.yml -d
 ```
 
-#### Test (make sure that you have a Redis container in execution - default port):
+#### Execute (without docker-compose):
+
+```
+docker build -f Dockerfile.Redis -t web-scraper-with-redis .
+```
+
+then:
+```
+docker run -p 3000:3000 web-scraper-with-redis
+```
+
+#### Execute (docker hub):
+```
+docker run -p 3000:3000 lhenrique42/web-scraper-with-redis
+```
+
+#### Test (make sure that you have a Redis container in execution):
 
 Start Redis:
 
@@ -44,21 +60,15 @@ docker run -d -p 6379:6379 --name redis1 redis
 REDIS='127.0.0.1' yarn test
 ```
 
-### Rotas da aplicação
+### Routes
 
-- **`GET /stats`**: The route receives a body (json) with this fields:
+- **`GET /stats`**: The route receives this query params:
 
-```json
-{
-    "username": <Github username>,
-    "repository": <Github repository>,
-    "branch": <repository branch name>
-}
 ```
-
-### DockerHub image name:
-
-lhenrique42/web-scraping-app
+  username: <Github username>,
+  repository: <Github repository>,
+  branch: <repository branch name>
+```
 
 ---
 

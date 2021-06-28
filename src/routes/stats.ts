@@ -1,26 +1,34 @@
 import { Router } from 'express';
+import IFetchGithubFileStatsService from '../interfaces/IFetchGithubFileStatsService';
+import { container } from '../inversify.config';
 import GithubRepository from '../models/GithubRepository';
 import Stats from '../models/Stats';
-import Redis from 'ioredis';
+import TYPES from '../types';
 
-import FetchFileStatsService from '../services/FetchFileStats';
-
-const redisClient = new Redis({host: process.env.REDIS_ENV}) as any;
-
-redisClient.on('error', (err: any) => {
-  console.log('Error occured while connecting or accessing redis server');
-});
-
-const fetchFileStatsService = new FetchFileStatsService(redisClient);
 const fetchFileStatsRouter = Router();
+
+const fetchGithubFileStatsService: IFetchGithubFileStatsService =
+  container.get<IFetchGithubFileStatsService>(TYPES.FetchGithubFileStatsService);
 
 fetchFileStatsRouter.get('/', async (request, response) => {
   try {
-    const { repository, username, branch } = request.body;
+    const repository = request.query['repository'];
+    const username = request.query['username'];
+    const branch = request.query['branch'];
+
+    if (!(repository || username || branch)) {
+      response.status(404).json({ error: 'There is an error on params' });
+      return;
+    }
+    if (typeof repository !== "string" || typeof username !== "string" || 
+      typeof branch !== "string") {
+      response.status(404).json({ error: 'One or more params have invalid format' });
+      return;
+    }
     
     const githubRepository: GithubRepository = { repository, username, branch };
 
-    const repositoryStats: Stats[] = await fetchFileStatsService.execute({repository: githubRepository});
+    const repositoryStats: Stats[] = await fetchGithubFileStatsService.Execute({repository: githubRepository});
 
     return response.status(200).json(repositoryStats);
   } catch (err) {

@@ -1,23 +1,25 @@
 import axios from 'axios';
+import { inject, injectable } from 'inversify';
+import IORedis from 'ioredis';
 import JSDOM from 'jsdom';
 import JSONCache from 'redis-json';
 import { ISetOptions } from 'redis-json/types/src/lib/jsonCache.types';
 
+import IFetchGithubFileStatsService, { Request } from '../interfaces/IFetchGithubFileStatsService';
 import GithubRepository from '../models/GithubRepository';
 import Stats from '../models/Stats';
+import TYPES from '../types';
 
-interface Request {
-  repository: GithubRepository;
-}
-class FetchFileStatsService {
+@injectable()
+class FetchGithubFileStatsService implements IFetchGithubFileStatsService {
 
-  private _redisClient: any;
+  private _redisClient: IORedis.Redis;
   
-  constructor(redisClient: any) {
+  constructor(@inject(TYPES.Redis) redisClient: IORedis.Redis) {
     this._redisClient = redisClient;
   }
 
-  public async execute({ repository }: Request): Promise<Stats[]> {
+  public async Execute({ repository }: Request): Promise<Stats[]> {
 
     let stats: Stats[] = [];
 
@@ -25,9 +27,7 @@ class FetchFileStatsService {
 
       const uri = "https://github.com/" + repository.username + "/" + repository.repository + "/tree/" + repository.branch;
       
-      const { data } = await axios.get(uri);
-
-      const { document } = new JSDOM.JSDOM(data).window;
+      const document: Document = await this.GetDocumentFromUri(uri);
 
       const hrefLastCommit = document.getElementsByClassName('f6 Link--secondary text-mono ml-2 d-none d-lg-inline');
 
@@ -58,17 +58,16 @@ class FetchFileStatsService {
     return stats;
   }
 
-  private async GetFileStatsFromGithubRepository(repository: GithubRepository, subfolder: string = "", stats: Stats[]): Promise<Stats[]> {
+  private async GetFileStatsFromGithubRepository(
+    repository: GithubRepository, subfolder: string = "", stats: Stats[]): Promise<Stats[]> {
     
     var subDirectories: string[] = [];
 
     try {
 
       const uri = "https://github.com/" + repository.username + "/" + repository.repository + "/tree/" + repository.branch + "/" + subfolder;
-      
-      const { data } = await axios.get(uri);
 
-      const { document } = new JSDOM.JSDOM(data).window;
+      const document: Document = await this.GetDocumentFromUri(uri);
 
       const rowHeaders = document.getElementsByClassName('js-navigation-open Link--primary');
 
@@ -87,16 +86,7 @@ class FetchFileStatsService {
 
           if(lineCount && size) {
             var parsedLines = parseInt(lineCount[1].replace( /[^\d\.]*/g, ''));
-            var parsedSize = parseFloat(size[1].replace( /[^\d\.]*/g, ''));
-            var bytes: number = 0;
-
-            if(size.includes("Bytes")) {
-              bytes = parsedSize;
-            } else if(size.includes("KB")) {
-              bytes = parsedSize * 1000;
-            } else if(size.includes("MB")) {
-              bytes = parsedSize * 1000 * 1000;
-            }
+            var bytes: number = this.GetSizeInBytes(size);
 
             var stat = stats.find(x => x.extension === extension);
             if(stat) {
@@ -133,6 +123,29 @@ class FetchFileStatsService {
     }
     return stats; 
   }
+
+  private async GetDocumentFromUri(uri: string): Promise<Document> {
+  
+    const { data } = await axios.get(uri);
+
+    const { document } = new JSDOM.JSDOM(data).window;
+
+    return document;
+  }
+
+  private GetSizeInBytes(size: string): number {
+    var bytes: number = 0
+    var parsedSize = parseFloat(size[1].replace( /[^\d\.]*/g, ''));
+
+    if(size.includes("Bytes")) {
+      bytes = parsedSize;
+    } else if(size.includes("KB")) {
+      bytes = parsedSize * 1000;
+    } else if(size.includes("MB")) {
+      bytes = parsedSize * 1000 * 1000;
+    }
+    return bytes;
+  }
 }
 
-export default FetchFileStatsService;
+export default FetchGithubFileStatsService;
