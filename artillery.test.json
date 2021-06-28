@@ -1,0 +1,31 @@
+{
+  "config": {
+    "target": "http://127.0.0.1:3000",
+    "http": {
+      "timeout": 60000
+    },
+    "phases": [
+      {
+        "duration": 2,
+        "arrivalRate": 2
+      }
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "Get stats from repository",
+      "flow": [
+        {
+          "get": {
+            "url": "/stats",
+            "qs": {
+              "username": "lhenrique42",
+              "repository": "gostack-fundamentos-node",
+              "branch": "master"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

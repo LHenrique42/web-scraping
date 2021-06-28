@@ -3,11 +3,11 @@ import app from '../app';
 
 describe('Stats', () => {
   it('should be able to get stats from a repository', async (done) => {
-    const response = await request(app).get('/stats').send({
-        repository: "gostack-fundamentos-node",
-        username: "LHenrique42",
-        branch: "master"
-    });
+    const response = await request(app).get('/stats').query({
+      repository: "gostack-fundamentos-node",
+      username: "LHenrique42",
+      branch: "master"
+  }).send();
 
     expect(response.body).toMatchObject(
       [

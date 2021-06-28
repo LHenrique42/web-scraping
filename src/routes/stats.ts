@@ -25,6 +25,8 @@ fetchFileStatsRouter.get('/', async (request, response) => {
       response.status(404).json({ error: 'One or more params have invalid format' });
       return;
     }
+
+    console.log(repository);
     
     const githubRepository: GithubRepository = { repository, username, branch };
 
